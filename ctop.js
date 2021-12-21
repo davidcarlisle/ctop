@@ -1,7 +1,7 @@
 
 var ctopT= {};
 var ctopTapply = {};
-
+var wsregex = /^\s*$/m;
 
 function ctop (){
     var mm = document.getElementsByTagName('math');
@@ -75,7 +75,9 @@ function ctopToken(nn,n,s) {
 	var mrow=ctopE('mrow');
 	for(var j=0;j<n.childNodes.length; j++ ) {
 	    if (n.childNodes[j].nodeType==3) {
-		ctopAppendTok(nn,s,n.childNodes[j].textContent);
+		if(!wsregex.test(n.childNodes[j].textContent)){
+		    ctopAppendTok(nn,s,n.childNodes[j].textContent);
+		}
 	    }else{
 		ctopAT(mrow,n.childNodes[j],0);
 	    }
@@ -133,12 +135,15 @@ ctopT["reln"] = ctopT["apply"];
 ctopT["bind"] = ctopT["apply"];
 
 function ctopMF(a,o,c) {
-    var mf = ctopE('mfenced');
-    mf.setAttribute('open',o);
-    mf.setAttribute('close',c);
+    var mf = ctopE('mrow');
+    ctopAppendTok(mf,'mo',o);
     for(var j=0;j<a.length; j++ ) {
 	ctopAT(mf,a[j],0);
+	if(j<a.length - 1) {
+	    ctopAppendTok(mf,'mo',',');
+	}
     }
+    ctopAppendTok(mf,'mo',c);
     return mf;
 }
 
@@ -266,7 +271,9 @@ ctopT["cn"] = function(nn,n,p) {
 	}
 	for(var j=0;j<n.childNodes.length; j++ ) {
 	    if (n.childNodes[j].nodeType==3) {
-		ctopAppendTok(mrow,'cn',n.childNodes[j].textContent);
+		if(n.childNodes.length > 1 && ! wsregex.test(n.childNodes[j].textContent)){
+		    ctopAppendTok(mrow,'cn',n.childNodes[j].textContent);
+		}
 	    }else if (n.childNodes[j].localName=='sep'){
 		ap.appendChild(mrow);
 		mrow = ctopE('mrow');
