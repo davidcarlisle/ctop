@@ -45,7 +45,7 @@ function ctopAT(nn,n,p) {
 	    }
 	}
     } else if (n.nodeType==3) {
-	nn.appendChild(n.cloneNode(false));
+	    nn.appendChild(n.cloneNode(false));
     }
 }
 
@@ -136,14 +136,14 @@ ctopT["bind"] = ctopT["apply"];
 
 function ctopMF(a,o,c) {
     var mf = ctopE('mrow');
-    ctopAppendTok(mf,'mo',o);
+    if(o != "") ctopAppendTok(mf,'mo',o);
     for(var j=0;j<a.length; j++ ) {
 	ctopAT(mf,a[j],0);
 	if(j<a.length - 1) {
 	    ctopAppendTok(mf,'mo',',');
 	}
     }
-    ctopAppendTok(mf,'mo',c);
+    if(c != "") ctopAppendTok(mf,'mo',c);
     return mf;
 }
 
@@ -425,7 +425,33 @@ ctopT["interval"] = function(nn,n,p) {
 	 )};
 
 function ctopS (nn,a,o,c){
-    nn.appendChild(ctopMF(a,o,c));
+    var bvars = [];
+    var conds = [];
+    var dofas = [];
+    var rest = []
+    for(var i=0;i<a.length;i++){
+	if(a[i].localName=='bvar') {
+	    bvars[bvars.length]=a[i];
+	} else if(a[i].localName=='condition') {
+	    conds[conds.length]=a[i];
+	} else if(a[i].localName=='domainofapplication') {
+	    dofas[dofas.length]=a[i];
+	} else {
+	    rest[rest.length]=a[i];
+	}
+    }
+    ctopAppendTok(nn,'mo',o);
+    nn.appendChild(ctopMF(rest,"",""));
+    if(conds.length!=0){
+	ctopAppendTok(nn,'mo', "|");
+	nn.appendChild(ctopMF(conds,"",""));
+    } else if (dofas.length!=0){
+	ctopAppendTok(nn,'mo', "|");
+	nn.appendChild(ctopMF(bvars,"",""));
+	ctopAppendTok(nn,'mo', "\u2208");
+	nn.appendChild(ctopMF(dofas,"",""));
+    }	
+    ctopAppendTok(nn,'mo', c);
 }
 
 				   
@@ -553,6 +579,15 @@ ctopTapply["power"] = function(nn,n,f,a,b,q,p)  {
 
 
 ctopT["condition"] = function(nn,n,p)  {
+    var mr = ctopE('mrow');
+    var c=ctopChildren(n);
+    for(var i=0;i<c.length;i++){
+	ctopAT(mr,c[i],0);
+    }
+    nn.appendChild(mr);
+}
+
+ctopT["domainofapplication"] = function(nn,n,p)  {
     var mr = ctopE('mrow');
     var c=ctopChildren(n);
     for(var i=0;i<c.length;i++){
@@ -830,11 +865,6 @@ ctopTapply["inverse"] = function(nn,n,f,a,b,q,p)  {
 
 ctopT["ident"] = function(nn,n,p) {ctopAppendTok(nn,"mi","id")}
 
-ctopT["domainofapplication"] = function(nn,n,p) {
-    var me=ctopE('merror');
-    ctopAppendTok(me,'mtext','unexpected domainofapplication');
-    nn.appendChild(me);
-}
 
 ctopT["share"] = function(nn,n,p) {
     var mi=ctopE('mi');
